@@ -1,0 +1,15 @@
+ip access-list standard NMS
+ permit host 10.0.0.105
+
+snmp-server location {{ config_context.address }}
+snmp-server contact {{ config_context.contact }}
+
+{# my current version of zabbix doesn't gather snmp stats correctly using snmpv3 #}
+snmp-server community {{ config_context.snmpv2_community }} ro NMS
+
+{# snmpv3 config if it works with zabbix #}
+{#
+snmp-server view readonly-view iso included
+snmp-server group nms v3 priv read readonly-view access NMS
+snmp-server user nms nms v3 auth sha {{ snmpv3_auth_password }} priv aes 128 {{ snmpv3_priv_password }} access NMS
+#}

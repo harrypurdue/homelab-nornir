@@ -1,0 +1,24 @@
+service timestamps debug datetime msec local
+service timestamps log datetime localtime
+clock timezone CST -6
+clock summer-time CDT recurring
+
+login on-failure log
+login on-success log
+
+archive
+ path flash:archive
+ write-memory
+
+{% for server in config_context.syslog %}
+logging host {{server}}
+{% endfor %}
+
+ip domain-name {{config_context.domain}}
+no ip domain-lookup
+
+{% include "vrf.j2" %}
+{% include "interfaces.j2" %}
+{% include "routing_protocols.j2" %}
+{% include "snmp.j2" %}
+{% include "static_routes.j2" %}

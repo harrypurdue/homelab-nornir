@@ -1,0 +1,5 @@
+{% for route in config_context.static_routes %}
+{% if route.vrf is defined %}
+ip route vrf {{route.vrf}} {{ route.network }} {{route.mask}} {{route.next_hop}}
+{% endif %}
+{% endfor %}

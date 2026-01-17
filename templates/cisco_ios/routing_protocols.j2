@@ -1,0 +1,13 @@
+{% for protocol in config_context.routing_protocols %}
+    {%- if protocol.name == "ospf" %}
+router ospf {{protocol.process_id}}
+        {% if protocol.passive_interfaces %}
+        {% for interface in protocol.passive_interfaces %}
+ passive-interface {{interface}}
+        {% endfor %}
+        {% endif %}
+        {% for network in protocol.networks %}
+ network {{network.network}} area {{network.area}}
+        {% endfor %}
+    {% endif %}
+{% endfor %}

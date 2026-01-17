@@ -1,0 +1,5 @@
+{% if config_context.vrfs is defined %}
+    {%- for vrf in config_context.vrfs %}
+ip vrf {{ vrf.name }}
+    {% endfor %}
+{% endif %}

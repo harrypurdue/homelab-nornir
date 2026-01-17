@@ -1,0 +1,15 @@
+inventory:
+  options:
+  plugin: NetBoxInventory2
+runner:
+  plugin: threaded
+  options:
+    num_workers: 10
+logging:
+  enabled: true
+  level: DEBUG
+  log_file: nornir.log
+  to_console: False
+user_defined:
+  saved_configs_path: configs
+  template_path: templates
