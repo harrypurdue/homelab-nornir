@@ -88,6 +88,13 @@ class helper():
         Send a command to all hosts.
 
         :param kwargs: Any arguments to pass to the netmiko send_command
+            Common netmiko send_command args
+                command_string
+                use_textfsm
+                textfsm_template
+                use_ttp
+                ttp_template
+
 
         :return: Returns AggregatedResult from the Nornir.run command.
 
@@ -99,6 +106,9 @@ class helper():
         Send configuration commands to all hosts at the same time.
 
         :param kwargs: Any arguments to pass to the netmiko send_config command.
+            Common netmiko send_config args
+                config_commands
+                config_mode_command
 
         :return: Returns AggregatedResult from the Nornir.run command.
         """
