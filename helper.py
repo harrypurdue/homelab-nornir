@@ -33,7 +33,7 @@ class helper():
         ## pulling from the nornir config file
         ## defaults to empty if no value found
         self.saved_configs_root = nr.config.user_defined.get("saved_configs_path") or ""
-        self.template_path = nr.config.user_defined.get('template_path') or ""
+        self.template_path = nr.config.user_defined.get("template_path") or ""
 
         ## make sure saved configuration root folder exists
         Path(f"{self.saved_configs_root}").mkdir(exist_ok = True)

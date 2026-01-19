@@ -43,4 +43,10 @@ result = helper_2.template()
 print_result(result, severity_level = logging.DEBUG) # Template generation and application require DEBUG level for result viewing.
 
 
-
+## Automatic rollback using Cisco IOS Archive
+## Auto rollback in 10 minutes if configuration is not confirmed
+## TODO: Reverting changes for individual hosts instead of for all hosts if one of the hosts fails.
+result = helper_2.send_config_all(config_commands = "logging host 1.2.3.4", config_mode_command = "config terminal revert timer 10")
+if not result.failed:
+    ## config result is not failed
+    helper_2.send_command_all(command_string = "configure confirm")
