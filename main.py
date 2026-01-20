@@ -1,52 +1,45 @@
-from helper import helper
-from nornir.core.filter import F
-from nornir_utils.plugins.functions import print_result
-import logging
 
-## Example Usage
+if __name__ == "__main__":
+    from helper import helper
+    from nornir.core.filter import F
+    from nornir_utils.plugins.functions import print_result
+    import argparse
 
-## Init the helper
-helper_2 = helper(config_file = "config.yml")
+    parser = argparse.ArgumentParser(prog = "nornir", description = "manage and/or configure CML routers using nornir")
+    parser.add_argument("--config", help = "yaml config file for nornir")
+    parser.add_argument("--send-command", dest = "send_command", help = "command to send to devices. Will not be executed in configure terminal.")
+    filter_group_top = parser.add_argument_group("Filtering options", description = "group and host options are mutually exclusive.")
+    filter_group_top.add_argument("--group-and", action = "store_true", dest = "group_and", help = "Use AND logic for groups.",)
+    filter_group = filter_group_top.add_mutually_exclusive_group()
+    filter_group.add_argument("--host", action = "append", help = "Host to filter on. Uses OR with other hosts.")
+    filter_group.add_argument("--group", action = "append", help = "Group to filter on. Uses OR by default with other groups.")
+    args = parser.parse_args()
 
-## Show command
-result = helper_2.send_command_all(command_string = "show ip route", use_textfsm = True)
-print_result(result)
+    ## building the filter to be used
+    ## hosts and groups are mutually exclusive. Only one or the other.
+    arg_filter = None
+    ## hosts
+    if args.host is not None:
+        for host in args.host:
+            if arg_filter is None:
+                arg_filter = F(name = host)
+            else:
+                arg_filter |= F(name = host) # or
+    ## groups
+    if args.group is not None:
+        for group in args.group:
+            if arg_filter is None:
+                arg_filter = F(groups__contains = group)
+            elif args.group_and:
+                arg_filter &= F(groups__contains = group) # and
+            else:
+                arg_filter |= F(groups__contains = group) # or
 
-## Config Change
-## Backup Config
-helper_2.backup_configuration()
-result = helper_2.send_config_all(config_commands = "logging host 1.1.1.1")
-print_result(result)
+    arg_config = args.config if args.config is not None else "config.yml"
 
-## Save Config
-result = helper_2.save_configuration()
-print_result(result)
+    h = helper(arg_config)
+    if arg_filter is not None: h.filter(arg_filter)
 
-## Config Change 2
-result = helper_2.send_config_all(config_commands = "no logging host 1.1.1.1")
-save = helper_2.save_configuration()
-print_result(result)
-print_result(save)
-
-## Filter Inventory
-helper_2.filter(F(name = "r1"))
-
-## Generate and apply Template
-result = helper_2.template(apply = True)
-print_result(result, severity_level = logging.DEBUG) # Template generation and application require DEBUG level for result viewing.
-
-## Filter Again
-helper_2.filter(F(name = "r4"))
-
-## Generate template
-result = helper_2.template()
-print_result(result, severity_level = logging.DEBUG) # Template generation and application require DEBUG level for result viewing.
-
-
-## Automatic rollback using Cisco IOS Archive
-## Auto rollback in 10 minutes if configuration is not confirmed
-## TODO: Reverting changes for individual hosts instead of for all hosts if one of the hosts fails.
-result = helper_2.send_config_all(config_commands = "logging host 1.2.3.4", config_mode_command = "config terminal revert timer 10")
-if not result.failed:
-    ## config result is not failed
-    helper_2.send_command_all(command_string = "configure confirm")
+    if args.send_command: 
+        result = h.send_command_all(command_string = args.send_command)
+        print_result(result)
