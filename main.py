@@ -18,11 +18,23 @@ if __name__ == "__main__":
     command_group.add_argument("--save-config", action = "store_true", help = "Save configuration of devices. Equivalent to `write memory`.")
     command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices to local files.")
     
+    parser.add_argument("--verbose", "-v", action = "store_true", help = "Verbose output")
+    
+    command_group_top = parser.add_argument_group("Command options", description = "Command to execute. Only one may be selected.")
+    command_group = command_group_top.add_mutually_exclusive_group()
+    command_group.add_argument("--generate-template", action = "store_true", help = "Generate templates")
+    command_group.add_argument("--apply-template", action = "store_true", help = "Generate and apply templates")
+    command_group.add_argument("--send-command", help = "Command to send to devices. Will not be executed in configure terminal.")
+    command_group.add_argument("--send-config", help="Configure command to send to devices.")
+    command_group.add_argument("--save-config", action = "store_true", help = "Save configuration of devices. Equivalent to `write memory`.")
+    command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices to local files.")
+    
     filter_group_top = parser.add_argument_group("Filtering options", description = "group and host options are mutually exclusive.")
     filter_group_top.add_argument("--group-and", action = "store_true", dest = "group_and", help = "Use AND logic for groups.",)
     filter_group = filter_group_top.add_mutually_exclusive_group()
     filter_group.add_argument("--host", action = "append", help = "Host to filter on. Uses OR with other hosts.")
     filter_group.add_argument("--group", action = "append", help = "Group to filter on. Uses OR by default with other groups.")
+    
     
     args = parser.parse_args()
 
@@ -59,6 +71,14 @@ if __name__ == "__main__":
         result = h.template(apply = True)
     elif args.send_command: 
         result = h.send_command_all(command_string = args.send_command)
+        print_result(result)
+    elif args.send_config:
+        result = h.send_config_all(config_commands = args.send_config)
+    elif args.save_config:
+        result = h.save_configuration()
+        print_result(result)
+    elif args.backup_config:
+        result = h.backup_configuration()
         print_result(result)
     elif args.send_config:
         result = h.send_config_all(config_commands = args.send_config)
