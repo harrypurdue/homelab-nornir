@@ -11,13 +11,13 @@ if __name__ == "__main__":
     
     command_group_top = parser.add_argument_group("Command options", description = "Command to execute. Only one may be selected.")
     command_group = command_group_top.add_mutually_exclusive_group()
-    command_group.add_argument("--generate-template", action = "store_true", help = "Generate templates")
-    command_group.add_argument("--apply-template", action = "store_true", help = "Generate and apply templates")
-    command_group.add_argument("--send-command", help = "Command to send to devices. Will not be executed in configure terminal.")
-    command_group.add_argument("--send-config", help="Configure command to send to devices.")
+    command_group.add_argument("--generate-template", action = "store_true", help = "Generate configuration from jinja2 templates")
+    command_group.add_argument("--apply-template", action = "store_true", help = "Generate and apply configuration from jinja2 templates")
+    command_group.add_argument("--send-command", help = "Command to send to devices. Command will not be executed in configure terminal.")
+    command_group.add_argument("--send-config", help = "Configure command to send to devices.")
     command_group.add_argument("--save-config", action = "store_true", help = "Save configuration of devices. Equivalent to `write memory`.")
-    command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices to local files.")
-       
+    command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices running-configuration to local files.")
+    
     filter_group_top = parser.add_argument_group("Filtering options", description = "group and host options are mutually exclusive.")
     filter_group_top.add_argument("--group-and", action = "store_true", dest = "group_and", help = "Use AND logic for groups.",)
     filter_group = filter_group_top.add_mutually_exclusive_group()
@@ -54,10 +54,10 @@ if __name__ == "__main__":
 
 
     if args.generate_template:
-        result = h.template()
+        result = h.jinja_template()
         print_result(result)
     elif args.apply_template:
-        result = h.template(apply = True)
+        result = h.jinja_template(apply = True)
     elif args.send_command: 
         result = h.send_command_all(command_string = args.send_command)
         print_result(result)

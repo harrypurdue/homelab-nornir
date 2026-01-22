@@ -41,7 +41,7 @@ class helper():
         ## original_nr allows multiple filter calls
         self.nr, self.original_nr = nr, nr
 
-    def _template(self, task: Task, apply: bool = False) -> Result:
+    def _jinja_template(self, task: Task, apply: bool = False) -> Result:
         """
         Generates or applys jinja2 templates to devices.
         
@@ -137,7 +137,7 @@ class helper():
         """
         pass
     
-    def template(self, **kwargs) -> AggregatedResult:
+    def jinja_template(self, **kwargs) -> AggregatedResult:
         """
         Wrapper function to generate or apply jinja2 template configurations for devices.
 
