@@ -20,3 +20,7 @@ router ospf {{ process_id }}
  </group>
 </group>
 </group>
+
+<group name="syslog">
+logging host {{ server }}
+</group>

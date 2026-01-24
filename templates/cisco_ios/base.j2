@@ -11,7 +11,7 @@ archive
  write-memory
 
 {% for server in config_context.syslog %}
-logging host {{server}}
+logging host {{ server.server }}
 {% endfor %}
 
 ip domain-name {{config_context.misc.domain}}
