@@ -17,6 +17,7 @@ if __name__ == "__main__":
     command_group.add_argument("--send-config", help = "Configure command to send to devices.")
     command_group.add_argument("--save-config", action = "store_true", help = "Save configuration of devices. Equivalent to `write memory`.")
     command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices running-configuration to local files.")
+    command_group.add_argument("--validate-config", action = "store_true", help = "Validates current running configuration using TTP.")
     
     filter_group_top = parser.add_argument_group("Filtering options", description = "group and host options are mutually exclusive.")
     filter_group_top.add_argument("--group-and", action = "store_true", dest = "group_and", help = "Use AND logic for groups.",)
@@ -77,3 +78,5 @@ if __name__ == "__main__":
     elif args.backup_config:
         result = h.backup_configuration()
         print_result(result)
+    elif args.validate_config:
+        h.validate_configuration()

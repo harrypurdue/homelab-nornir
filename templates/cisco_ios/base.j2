@@ -14,8 +14,10 @@ archive
 logging host {{server}}
 {% endfor %}
 
-ip domain-name {{config_context.domain}}
+ip domain-name {{config_context.misc.domain}}
+{% if config_context.misc.disable_domain_lookup == "True" %}
 no ip domain-lookup
+{% endif %}
 
 {% include "vrf.j2" %}
 {% include "interfaces.j2" %}

@@ -3,12 +3,14 @@ from nornir_jinja2.plugins.tasks import template_file
 from nornir_netmiko import netmiko_send_config, netmiko_send_command, netmiko_save_config
 from nornir.core.task import Task, Result, AggregatedResult
 from nornir.core.filter import F
+from deepdiff import DeepDiff
 from typing import Optional, Any
 from pathlib import Path
 from getpass import getpass
 from datetime import datetime
 from logging import DEBUG
 from os import environ
+from pprint import pprint as pp
 
 class helper():
     def __init__(self, 
@@ -144,7 +146,7 @@ class helper():
         :param kwargs: Arugments to pass to the self._template function.
         :return: Returns AggregatedResult from the Nornir.run command.
         """
-        return self.nr.run(self._template, name = "template", **kwargs)
+        return self.nr.run(self._jinja_template, name = "template", **kwargs)
     
     def save_configuration(self) -> AggregatedResult:
         """
@@ -166,3 +168,21 @@ class helper():
             with open(f"{self.saved_configs_root}/{host}/{host}-{now}", "w") as f:
                 f.write(result[host][0].result)
         return result
+    
+    def validate_configuration(self) -> None:
+        result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
+        print("Comparing intended to actual")
+        print("-" * 75)
+        for host in result:
+            print(f"host: {host}")
+            for k in self.nr.inventory.hosts[host].data["config_context"]:
+                ## comparing the data from Nornir Object because that is what is expected to be configured.
+                if k in result[host][0].result[0][0]:
+                    actual_config = result[host][0].result[0][0][k]
+                    intended_config = self.nr.inventory.hosts[host].data["config_context"][k]
+                    diff = DeepDiff(intended_config, actual_config)
+                    print(f"{k}")
+                    print("-" * 75)
+                    pp(diff, indent = 4) if diff else print("Configurations are identical.")
+                    print("-" * 75)
+        

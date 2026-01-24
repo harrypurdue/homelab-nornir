@@ -1,0 +1,22 @@
+<group name="interfaces">
+interface {{ name }}
+ description {{ description | _line_ }}
+ ip address {{ address }} {{ mask }}
+ ip vrf forwarding {{ vrf }}
+</group>
+
+<group name="routing_protocols*">
+<group name="ospf">
+router ospf {{ process_id }}
+ router-id {{ router_id }}
+ <group name="enabled_interfaces*">
+ no passive-interface {{ name }}
+ </group>
+ <group name="passive_interfaces*">
+ passive-interface {{ name }}
+ </group>
+ <group name="networks*">
+ network {{ network }} {{ wildcard }} area {{ area }}
+ </group>
+</group>
+</group>
