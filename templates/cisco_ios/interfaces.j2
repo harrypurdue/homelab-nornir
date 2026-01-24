@@ -1,11 +1,13 @@
 {% for interface in config_context.interfaces %}
 interface {{interface.name}}
  {% if interface.vrf is defined %}
- {#ip vrf forwarding {{ interface.vrf }}#}
+ ip vrf forwarding {{ interface.vrf }}
  {% endif %}
+ {% if interface.address is defined and interface.mask is defined %}
  ip address {{interface.address}} {{interface.mask}}
- no shutdown
- {% if interface.description %}
+  no shutdown
+{% endif %}
+ {% if interface.description is defined %}
  description {{interface.description}}
  {% endif %}
 {% endfor %}
