@@ -32,3 +32,33 @@ ip vrf {{ name }}
 <group name="static_routes*">
 ip route vrf {{ vrf }} {{ network }} {{ mask }} {{ next_hop }}
 </group>
+
+<group name="misc">
+no ip domain lookup {{ disable_domain_lookup | set("True")}}
+ip domain name {{ domain }}
+
+<group name="snmp">
+snmp-server community {{ community_str }} RO {{ access_list }}
+snmp-server contact {{ contact }}
+</group>
+
+<group name="users*">
+username {{ user }} privilege {{ privilege_level }} secret {{secret_level}} {{secret}}
+</group>
+
+<group name="http">
+{{enabled | re("no?")}} ip http {{server | _line_ }}
+</group>
+
+<group name="archive">
+archive {{ configured | set("True") }}
+ log config {{ a | ignore }}
+  logging enable {{ log }}
+ path {{ path }} 
+ write-memory {{ archive_on_save | set("True") }}
+</group>
+</group>
+
+<group name="site">
+snmp-server location {{ address | _line_ }}
+</group>

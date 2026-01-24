@@ -170,19 +170,29 @@ class helper():
         return result
     
     def validate_configuration(self) -> None:
+        """
+        Compares the intended configuration to the actual configuration on the device and displays the differences.
+
+        The intended configuration is pulled from the self.nr object which is pulled from the netbox config context.
+
+        ttp templates used for comparison are stored under ./templates/ttp
+
+        Does not return anything.
+        
+        """
         result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
         print("Comparing intended to actual")
         print("-" * 75)
         for host in result:
             print(f"host: {host}")
             for k in self.nr.inventory.hosts[host].data["config_context"]:
-                ## comparing the data from Nornir Object because that is what is expected to be configured.
                 if k in result[host][0].result[0][0]:
                     actual_config = result[host][0].result[0][0][k]
                     intended_config = self.nr.inventory.hosts[host].data["config_context"][k]
                     diff = DeepDiff(intended_config, actual_config)
-                    print(f"{k}")
-                    print("-" * 75)
+                    print(f"configuration item: {k}")
+                    print("*" * 25)
                     pp(diff, indent = 4) if diff else print("Configurations are identical.")
                     print("-" * 75)
+        
         

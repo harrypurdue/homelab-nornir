@@ -1,11 +1,11 @@
 ip access-list standard NMS
  permit host 10.0.0.105
 
-snmp-server location {{ config_context.address }}
-snmp-server contact {{ config_context.contact }}
+snmp-server location {{ config_context.site.address }}
+snmp-server contact {{ config_context.misc.snmp.contact }}
 
 {# my current version of zabbix doesn't gather snmp stats correctly using snmpv3 #}
-snmp-server community {{ config_context.snmpv2_community }} ro NMS
+snmp-server community {{ config_context.misc.snmp.community_str }} ro {{ config_context.misc.snmp.access_list }}
 
 {# snmpv3 config if it works with zabbix #}
 {#
