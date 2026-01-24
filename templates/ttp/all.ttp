@@ -28,3 +28,7 @@ logging host {{ server }}
 <group name="vrfs*">
 ip vrf {{ name }}
 </group>
+
+<group name="static_routes*">
+ip route vrf {{ vrf }} {{ network }} {{ mask }} {{ next_hop }}
+</group>
