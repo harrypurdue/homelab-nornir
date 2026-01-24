@@ -24,3 +24,7 @@ router ospf {{ process_id }}
 <group name="syslog">
 logging host {{ server }}
 </group>
+
+<group name="vrfs*">
+ip vrf {{ name }}
+</group>
