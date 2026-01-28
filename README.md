@@ -13,3 +13,5 @@ Requires python < 3.14
     pip install -r requirements.txt
 
     py main.py --send-command "show version"
+
+See `example.py`
