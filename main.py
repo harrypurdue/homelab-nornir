@@ -3,6 +3,7 @@ if __name__ == "__main__":
     from helper import helper
     from nornir.core.filter import F
     from nornir_utils.plugins.functions import print_result
+    from logging import DEBUG
     import argparse
 
     parser = argparse.ArgumentParser(prog = "nornir", description = "manage and/or configure CML routers using nornir")
@@ -56,27 +57,21 @@ if __name__ == "__main__":
 
     if args.generate_template:
         result = h.jinja_template()
-        print_result(result)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.apply_template:
         result = h.jinja_template(apply = True)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.send_command: 
         result = h.send_command_all(command_string = args.send_command)
-        print_result(result)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.send_config:
         result = h.send_config_all(config_commands = args.send_config)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.save_config:
         result = h.save_configuration()
-        print_result(result)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.backup_config:
         result = h.backup_configuration()
-        print_result(result)
-    elif args.send_config:
-        result = h.send_config_all(config_commands = args.send_config)
-    elif args.save_config:
-        result = h.save_configuration()
-        print_result(result)
-    elif args.backup_config:
-        result = h.backup_configuration()
-        print_result(result)
+        if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.validate_config:
         h.validate_configuration()
