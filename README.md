@@ -5,8 +5,6 @@ Inventory for nornir is pulled from Netbox.
 
 ## quickstart
 
-Requires python < 3.14
-
     py -m venv venv
     venv/scripts/activate
     py -m pip install --upgrade pip
