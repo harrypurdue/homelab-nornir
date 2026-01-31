@@ -17,7 +17,8 @@ if __name__ == "__main__":
     command_group.add_argument("--send-command", help = "Command to send to devices. Command will not be executed in configure terminal.")
     command_group.add_argument("--send-config", help = "Configure command to send to devices.")
     command_group.add_argument("--save-config", action = "store_true", help = "Save configuration of devices. Equivalent to `write memory`.")
-    command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices running-configuration to local files.")
+    command_group.add_argument("--backup-config", action = "store_true", help = "Backup configuration of devices running-configuration to local files. " \
+                                "If the folder where the configurations are stored is a git reposiroty, any changes will be commited.")
     command_group.add_argument("--validate-config", action = "store_true", help = "Validates current running configuration using TTP.")
     
     filter_group_top = parser.add_argument_group("Filtering options", description = "group and host options are mutually exclusive.")

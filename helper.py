@@ -7,10 +7,10 @@ from deepdiff import DeepDiff
 from typing import Optional, Any
 from pathlib import Path
 from getpass import getpass
-from datetime import datetime
 from logging import DEBUG
 from os import environ
 from pprint import pprint as pp
+from git import Repo
 
 class helper():
     def __init__(self, 
@@ -42,6 +42,13 @@ class helper():
 
         ## original_nr allows multiple filter calls
         self.nr, self.original_nr = nr, nr
+
+        ## check if configs are managed by git repo
+        try:
+            self.repo = Repo(self.saved_configs_root)
+        except Exception as e:
+            self.repo = None
+
 
     def _jinja_template(self, task: Task, apply: bool = False) -> Result:
         """
@@ -159,14 +166,20 @@ class helper():
     def backup_configuration(self) -> AggregatedResult:
         """
         Backup the configuration of devices to a file.
+
+        If the configuration path `self.saved_configs_root` is a git repository, then any changes will be committed.
         
         :return: Returns the AggregatedResult result of getting the configuration from the device.
         """
         result = self.send_command_all(command_string = "show running-config")
-        now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         for host in result:
-            with open(f"{self.saved_configs_root}/{host}/{host}-{now}", "w") as f:
+            with open(f"{self.saved_configs_root}/{host}.txt", "w") as f:
                 f.write(result[host][0].result)
+            if self.repo is not None:
+                self.repo.index.add(f"{host}.txt")
+        if self.repo is not None:
+            if self.repo.is_dirty():
+                self.repo.index.commit("updated configurations")
         return result
     
     def validate_configuration(self) -> None:
