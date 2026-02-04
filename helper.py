@@ -4,12 +4,11 @@ from nornir_netmiko import netmiko_send_config, netmiko_send_command, netmiko_sa
 from nornir.core.task import Task, Result, AggregatedResult
 from nornir.core.filter import F
 from deepdiff import DeepDiff
-from typing import Optional, Any
+from typing import Optional, Any, Iterable
 from pathlib import Path
 from getpass import getpass
 from logging import DEBUG
 from os import environ
-from pprint import pprint as pp
 from git import Repo
 
 class helper():
@@ -182,7 +181,7 @@ class helper():
                 self.repo.index.commit("updated configurations")
         return result
     
-    def validate_configuration(self) -> None:
+    def validate_configuration(self) -> Iterable:
         """
         Compares the intended configuration to the actual configuration on the device and displays the differences.
 
@@ -190,22 +189,20 @@ class helper():
 
         ttp templates used for comparison are stored under ./templates/ttp
 
-        Does not return anything.
+        :return: Returns an iterable of dictionaries. The key of the dictionary is the host and the value is a list of 
+        dictionaries where the key is the configuration item and the value is the change between the current configuration
+        and the intended configuration.
         
         """
         result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
-        print("Comparing intended to actual")
-        print("-" * 75)
+        return_list = []
         for host in result:
-            print(f"host: {host}")
-            for k in self.nr.inventory.hosts[host].data["config_context"]:
-                if k in result[host][0].result[0][0]:
-                    actual_config = result[host][0].result[0][0][k]
-                    intended_config = self.nr.inventory.hosts[host].data["config_context"][k]
-                    diff = DeepDiff(intended_config, actual_config)
-                    print(f"configuration item: {k}")
-                    print("*" * 25)
-                    pp(diff, indent = 4) if diff else print("Configurations are identical.")
-                    print("-" * 75)
-        
-        
+            tmp = {host : []}
+            for configuration_item in self.nr.inventory.hosts[host].data["config_context"]:
+                if configuration_item in result[host][0].result[0][0]:
+                    current_config = result[host][0].result[0][0][configuration_item]
+                    intended_config = self.nr.inventory.hosts[host].data["config_context"][configuration_item]
+                    diff = DeepDiff(intended_config, current_config)
+                    tmp[host].append({configuration_item : diff})
+            return_list.append(tmp)
+        return return_list

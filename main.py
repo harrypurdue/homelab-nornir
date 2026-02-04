@@ -5,6 +5,7 @@ if __name__ == "__main__":
     from nornir_utils.plugins.functions import print_result
     from logging import DEBUG
     import argparse
+    from pprint import pprint as pp
 
     parser = argparse.ArgumentParser(prog = "nornir", description = "manage and/or configure CML routers using nornir")
     parser.add_argument("--config", help = "yaml config file for nornir")
@@ -75,4 +76,7 @@ if __name__ == "__main__":
         result = h.backup_configuration()
         if args.verbose: print_result(result, severity_level = DEBUG)
     elif args.validate_config:
-        h.validate_configuration()
+        result = h.validate_configuration()
+        if args.verbose:
+            pp(result)
+            
