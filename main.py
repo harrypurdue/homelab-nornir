@@ -1,6 +1,6 @@
 
 if __name__ == "__main__":
-    from helper import helper
+    from helper import Helper
     from nornir.core.filter import F
     from nornir_utils.plugins.functions import print_result
     from logging import DEBUG
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     arg_config = args.config if args.config is not None else "config.yml"
 
-    h = helper(arg_config)
+    h = Helper(arg_config)
     if arg_filter is not None: h.filter(arg_filter)
 
 

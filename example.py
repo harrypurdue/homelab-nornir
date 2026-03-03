@@ -1,4 +1,4 @@
-from helper import helper
+from helper import Helper
 from nornir.core.filter import F
 from nornir_utils.plugins.functions import print_result
 import logging
@@ -6,7 +6,7 @@ import logging
 ## Example Usage
 
 ## Init the helper
-my_helper = helper(config_file = "config.yml")
+my_helper = Helper(config_file = "config.yml")
 
 ## Show command
 result = my_helper.send_command_all(command_string = "show ip route", use_textfsm = True)

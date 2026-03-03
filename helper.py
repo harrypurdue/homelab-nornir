@@ -11,7 +11,7 @@ from logging import DEBUG
 from os import environ
 from git import Repo
 
-class helper():
+class Helper():
     def __init__(self, 
                  config_file: Optional[str] = None, 
                  username: Optional[str] = None, 
@@ -49,39 +49,39 @@ class helper():
             self.repo = None
 
 
-    def _jinja_template(self, task: Task, apply: bool = False) -> Result:
-        """
-        Generates or applys jinja2 templates to devices.
+    # def _jinja_template(self, task: Task, apply: bool = False) -> Result:
+    #     """
+    #     Generates or applys jinja2 templates to devices.
         
-        :param task: Nornir task object
-        :param apply: Apply the generated template to the device
-        :return: Returns a Nornir Result object with the results of the generation and/or application of the template
-        """
-        # load data for template
-        template_vars = task.host.extended_data()
+    #     :param task: Nornir task object
+    #     :param apply: Apply the generated template to the device
+    #     :return: Returns a Nornir Result object with the results of the generation and/or application of the template
+    #     """
+    #     # load data for template
+    #     template_vars = task.host.extended_data()
 
-        # name conflicts with Task/Result object return value
-        del template_vars["name"]
+    #     # name conflicts with Task/Result object return value
+    #     del template_vars["name"]
 
-        if task.host.platform == "cisco_ios":
-            template = "base.j2"
+    #     if task.host.platform == "cisco_ios":
+    #         template = "base.j2"
 
-        path = f"{self.template_path}/"
-        path += task.host.platform
+    #     path = f"{self.template_path}/"
+    #     path += task.host.platform
 
-        changed = False
-        failed = False
+    #     changed = False
+    #     failed = False
 
-        # generate template
-        generated_template = task.run(task = template_file, template = template, path = path, name = "generate_template", severity_level = DEBUG, **template_vars)
-        failed = generated_template.failed
+    #     # generate template
+    #     generated_template = task.run(task = template_file, template = template, path = path, name = "generate_template", severity_level = DEBUG, **template_vars)
+    #     failed = generated_template.failed
 
-        if apply:
-            applied_result = task.run(task = netmiko_send_config, config_commands = generated_template[0].result.splitlines(), severity_level = DEBUG, name = "apply_template")
-            failed = applied_result.failed
-            changed = applied_result.changed
+    #     if apply:
+    #         applied_result = task.run(task = netmiko_send_config, config_commands = generated_template[0].result.splitlines(), severity_level = DEBUG, name = "apply_template")
+    #         failed = applied_result.failed
+    #         changed = applied_result.changed
 
-        return Result(task.host, result = f"host: {task.host} changed: {changed} failed: {failed}", changed = changed, failed = failed)
+    #     return Result(task.host, result = f"host: {task.host} changed: {changed} failed: {failed}", changed = changed, failed = failed)
     
     def filter(self, filter: F) -> None:
         """
@@ -91,11 +91,11 @@ class helper():
         """
         self.nr = self.original_nr.filter(filter)
 
-    def send_command_all(self, **kwargs: Any) -> AggregatedResult:
+    def run(self, *args: Any, **kwargs: Any) -> AggregatedResult:
         """
-        Send a command to all hosts.
+        Run a task.
 
-        :param kwargs: Any arguments to pass to the netmiko send_command
+        :param kwargs: Any arguments to pass to Nornir.run
             Common netmiko send_command args
                 command_string
                 use_textfsm
@@ -107,52 +107,16 @@ class helper():
         :return: Returns AggregatedResult from the Nornir.run command.
 
         """
-        return self.nr.run(netmiko_send_command, **kwargs)
-    
-    def send_config_all(self, **kwargs: Any) -> AggregatedResult:
-        """
-        Send configuration commands to all hosts at the same time.
+        return self.nr.run(*args, **kwargs)
+       
+    # def jinja_template(self, **kwargs) -> AggregatedResult:
+    #     """
+    #     Wrapper function to generate or apply jinja2 template configurations for devices.
 
-        :param kwargs: Any arguments to pass to the netmiko send_config command.
-            Common netmiko send_config args
-                config_commands
-                config_mode_command
-
-        :return: Returns AggregatedResult from the Nornir.run command.
-        """
-        return self.nr.run(netmiko_send_config, **kwargs)
-
-    def send_command_single(self, task: Task, **kwargs: Any) -> AggregatedResult:
-        """
-        Send a command to a hosts in their own context.
-        
-        :param task: Nornir Task
-        :param kwargs: Any arguments to pass to the netmiko send_command
-
-        :return: Returns AggregatedResult from the Nornir.run command.
-
-        """
-        pass
-
-    def send_config_single(self, task: Task, **kwargs: Any) -> AggregatedResult:
-        """
-        Send a command to a hosts in their own context.
-        
-        :param task: Nornir Task
-        :param kwargs: Any arguments to pass to the netmiko send_config command.
-        
-        :return: Returns AggregatedResult from the Nornir.run command.
-        """
-        pass
-    
-    def jinja_template(self, **kwargs) -> AggregatedResult:
-        """
-        Wrapper function to generate or apply jinja2 template configurations for devices.
-
-        :param kwargs: Arugments to pass to the self._template function.
-        :return: Returns AggregatedResult from the Nornir.run command.
-        """
-        return self.nr.run(self._jinja_template, name = "template", **kwargs)
+    #     :param kwargs: Arugments to pass to the self._template function.
+    #     :return: Returns AggregatedResult from the Nornir.run command.
+    #     """
+    #     return self.nr.run(self._jinja_template, name = "template", **kwargs)
     
     def save_configuration(self) -> AggregatedResult:
         """
@@ -181,28 +145,31 @@ class helper():
                 self.repo.index.commit("updated configurations")
         return result
     
-    def validate_configuration(self) -> Iterable:
-        """
-        Compares the intended configuration to the actual configuration on the device and displays the differences.
+    def send_command_all(self, **kwargs):
+        return self.nr.run(task = netmiko_send_command, **kwargs)
 
-        The intended configuration is pulled from the self.nr object which is pulled from the netbox config context.
+    # def validate_configuration(self) -> Iterable:
+    #     """
+    #     Compares the intended configuration to the actual configuration on the device and displays the differences.
 
-        ttp templates used for comparison are stored under ./templates/ttp
+    #     The intended configuration is pulled from the self.nr object which is pulled from the netbox config context.
 
-        :return: Returns an iterable of dictionaries. The key of the dictionary is the host and the value is a list of 
-        dictionaries where the key is the configuration item and the value is the change between the current configuration
-        and the intended configuration.
+    #     ttp templates used for comparison are stored under ./templates/ttp
+
+    #     :return: Returns an iterable of dictionaries. The key of the dictionary is the host and the value is a list of 
+    #     dictionaries where the key is the configuration item and the value is the change between the current configuration
+    #     and the intended configuration.
         
-        """
-        result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
-        return_list = []
-        for host in result:
-            tmp = {host : []}
-            for configuration_item in self.nr.inventory.hosts[host].data["config_context"]:
-                if configuration_item in result[host][0].result[0][0]:
-                    current_config = result[host][0].result[0][0][configuration_item]
-                    intended_config = self.nr.inventory.hosts[host].data["config_context"][configuration_item]
-                    diff = DeepDiff(intended_config, current_config)
-                    tmp[host].append({configuration_item : diff})
-            return_list.append(tmp)
-        return return_list
+    #     """
+    #     result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
+    #     return_list = []
+    #     for host in result:
+    #         tmp = {host : []}
+    #         for configuration_item in self.nr.inventory.hosts[host].data["config_context"]:
+    #             if configuration_item in result[host][0].result[0][0]:
+    #                 current_config = result[host][0].result[0][0][configuration_item]
+    #                 intended_config = self.nr.inventory.hosts[host].data["config_context"][configuration_item]
+    #                 diff = DeepDiff(intended_config, current_config)
+    #                 tmp[host].append({configuration_item : diff})
+    #         return_list.append(tmp)
+    #     return return_list
