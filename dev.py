@@ -1,122 +1,46 @@
-from helper import Helper
-from nornir_netmiko.tasks import netmiko_send_command, netmiko_send_config
-from nornir_jinja2.plugins.tasks import template_file
-from nornir.core.task import Result, AggregatedResult
+from nornir import InitNornir
+from typing import Optional, Any
+from os import environ
+from getpass import getpass
+from pathlib import Path
+from git import Repo
 from nornir.core.filter import F
-from nornir_utils.plugins.functions import print_result
-from deepdiff import DeepDiff
 
+class newHelper():
 
-class customTasks:
-
-    @staticmethod
-    def command(task, command, config = False, **kwargs):
-        if config:
-            task_ = netmiko_send_config
-            command_key = "config_commands"
-        elif isinstance(command, str):
-            task_ = netmiko_send_command
-            command_key = "command_string"
-        else:
-            raise Exception(f"Error: `command` expected to be string when config is False")
-
-        run_params = {"task" : task_, command_key : command}
-
-        result = task.run(**run_params, **kwargs)
-
-        return Result(host = task.host,
-                    result = result[0].result,
-                    failed = result.failed,
-                    changed = result.changed)
-   
-    @staticmethod
-    def template(task, apply = False):
-        """
-        Generates or applys jinja2 templates to devices.
+    def __init__(self, 
+                 config_file: Optional[str] = None, 
+                 username: Optional[str] = None, 
+                 password: Optional[str] = None, 
+                 filter: Optional[F] = None, 
+                 **kwargs: Any) -> None:
         
-        :param task: Nornir task object
-        :param apply: Apply the generated template to the device
-        :return: Returns a Nornir Result object with the results of the generation and/or application of the template
-        """
-        # load data for template
-        template_vars = task.host.extended_data()
+        nr = InitNornir(config_file = config_file) if config_file is not None else InitNornir(**kwargs)
 
-        # name conflicts with Task/Result object return value
-        del template_vars["name"]
+        nr.inventory.defaults.username = username or environ['NORNIR_USERNAME']
+        nr.inventory.defaults.password = password or environ['NORNIR_PASSWORD']
+        if nr.inventory.defaults.username is None:
+            nr.inventory.defaults.username = input("Username: ")
+        if nr.inventory.defaults.password is None:
+            nr.inventory.defaults.password = getpass("Password: ")
 
-        if task.host.platform == "cisco_ios":
-            template = "base.j2"
+        if filter is not None:
+            nr = nr.filter(filter)
 
-        path = f"templates/"
-        path += task.host.platform
+        ## pulling from the nornir config file
+        ## defaults to empty if no value found
+        self.saved_configs_root = nr.config.user_defined.get("saved_configs_path") or ""
+        self.template_path = nr.config.user_defined.get("template_path") or ""
 
-        changed = False
-        failed = False
+        ## make sure saved configuration root folder exists
+        Path(f"{self.saved_configs_root}").mkdir(exist_ok = True)
 
-        # generate template
-        generated_template = task.run(task = template_file, template = template, path = path, **template_vars)
-        failed = generated_template.failed
-        result = generated_template[0].result
+        ## original_nr allows multiple filter calls
+        self.nr, self.original_nr = nr, nr
 
-        if apply:
-            applied_result = task.run(task = netmiko_send_config, config_commands = generated_template[0].result.splitlines())
-            failed = applied_result.failed
-            changed = applied_result.changed
-            result = applied_result[0].result
-
-        return Result(host = task.host, 
-                    #   result = f"host: {task.host} changed: {changed} failed: {failed}",
-                      result = result,
-                      changed = changed, 
-                      failed = failed)
-    
-    @staticmethod
-    def validate_configuration(task):
-        """
-        Compares the intended configuration to the actual configuration on the device and displays the differences.
-
-        The intended configuration is pulled from the self.nr object which is pulled from the netbox config context.
-
-        ttp templates used for comparison are stored under ./templates/ttp
-
-        :return: Returns a Result object where the result is an iterable of dictionaries. The key of the dictionary is the host and the value is a list of 
-        dictionaries where the key is the configuration item and the value is the change between the current configuration
-        and the intended configuration.
-        
-        """
-        result = task.run(task = customTasks.command, command = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
-        return_list = []
-        for host in result:
-            tmp = {host : []}
-            for configuration_item in task.host.data["config_context"]:
-                if configuration_item in result[0].result[0][0]:
-                    current_config = result[0].result[0][0][configuration_item]
-                    intended_config = task.host.data["config_context"][configuration_item]
-                    diff = DeepDiff(intended_config, current_config)
-                    tmp[host].append({configuration_item : diff})
-            return_list.append(tmp)
-
-        return Result(host = task.host,
-                      changed = False,
-                      failed = False,
-                      result = return_list)
-    
-    def test(task):
-        result = task.run(task = customTasks.command, command = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
-        
-        return Result(host = task.host,
-                      result = result[0].result,
-                      changed = result.changed,
-                      failed = result.failed)
-
-
-h = Helper("config.yml")
-
-r = h.run(task = customTasks.validate_configuration)
-
-breakpoint()
-for host in r:
-    
-    if not r[host].failed:
-        print_result(r[host][0])
+        ## check if configs are managed by git repo
+        try:
+            self.repo = Repo(self.saved_configs_root)
+        except Exception:
+            self.repo = None
 

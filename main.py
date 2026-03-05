@@ -5,7 +5,7 @@ if __name__ == "__main__":
     from nornir_utils.plugins.functions import print_result
     from logging import DEBUG
     import argparse
-    from pprint import pprint as pp
+    import customTasks
 
     parser = argparse.ArgumentParser(prog = "nornir", description = "manage and/or configure CML routers using nornir")
     parser.add_argument("--config", help = "yaml config file for nornir")
@@ -58,25 +58,19 @@ if __name__ == "__main__":
 
 
     if args.generate_template:
-        result = h.jinja_template()
-        if args.verbose: print_result(result, severity_level = DEBUG)
+        result = h.run(task = customTasks.template)
     elif args.apply_template:
-        result = h.jinja_template(apply = True)
-        if args.verbose: print_result(result, severity_level = DEBUG)
-    elif args.send_command: 
-        result = h.send_command_all(command_string = args.send_command)
-        if args.verbose: print_result(result, severity_level = DEBUG)
+        result = h.run(task = customTasks.template, apply = True)
+    elif args.send_command:
+        result = h.run(task = customTasks.command, command = args.send_command)
     elif args.send_config:
-        result = h.send_config_all(config_commands = args.send_config)
-        if args.verbose: print_result(result, severity_level = DEBUG)
+        result = h.run(task = customTasks.command, command = args.send_config, config = True)
     elif args.save_config:
-        result = h.save_configuration()
-        if args.verbose: print_result(result, severity_level = DEBUG)
+        result = h.run(task = customTasks.save_configuration)
     elif args.backup_config:
-        result = h.backup_configuration()
-        if args.verbose: print_result(result, severity_level = DEBUG)
+        result = h.run(task = customTasks.backup_configuration, dir = getattr(h, "saved_configs_root"))
     elif args.validate_config:
-        result = h.validate_configuration()
-        if args.verbose:
-            pp(result)
-            
+        result = h.run(task = customTasks.validate_configuration)
+    
+    if args.verbose: 
+        print_result(result, severity_level = DEBUG)

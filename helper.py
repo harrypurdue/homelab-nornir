@@ -1,13 +1,10 @@
 from nornir import InitNornir
-from nornir_jinja2.plugins.tasks import template_file
-from nornir_netmiko import netmiko_send_config, netmiko_send_command, netmiko_save_config
-from nornir.core.task import Task, Result, AggregatedResult
+from nornir_netmiko import netmiko_send_command
+from nornir.core.task import AggregatedResult
 from nornir.core.filter import F
-from deepdiff import DeepDiff
-from typing import Optional, Any, Iterable
+from typing import Optional, Any
 from pathlib import Path
 from getpass import getpass
-from logging import DEBUG
 from os import environ
 from git import Repo
 
@@ -47,41 +44,6 @@ class Helper():
             self.repo = Repo(self.saved_configs_root)
         except Exception as e:
             self.repo = None
-
-
-    # def _jinja_template(self, task: Task, apply: bool = False) -> Result:
-    #     """
-    #     Generates or applys jinja2 templates to devices.
-        
-    #     :param task: Nornir task object
-    #     :param apply: Apply the generated template to the device
-    #     :return: Returns a Nornir Result object with the results of the generation and/or application of the template
-    #     """
-    #     # load data for template
-    #     template_vars = task.host.extended_data()
-
-    #     # name conflicts with Task/Result object return value
-    #     del template_vars["name"]
-
-    #     if task.host.platform == "cisco_ios":
-    #         template = "base.j2"
-
-    #     path = f"{self.template_path}/"
-    #     path += task.host.platform
-
-    #     changed = False
-    #     failed = False
-
-    #     # generate template
-    #     generated_template = task.run(task = template_file, template = template, path = path, name = "generate_template", severity_level = DEBUG, **template_vars)
-    #     failed = generated_template.failed
-
-    #     if apply:
-    #         applied_result = task.run(task = netmiko_send_config, config_commands = generated_template[0].result.splitlines(), severity_level = DEBUG, name = "apply_template")
-    #         failed = applied_result.failed
-    #         changed = applied_result.changed
-
-    #     return Result(task.host, result = f"host: {task.host} changed: {changed} failed: {failed}", changed = changed, failed = failed)
     
     def filter(self, filter: F) -> None:
         """
@@ -108,68 +70,6 @@ class Helper():
 
         """
         return self.nr.run(*args, **kwargs)
-       
-    # def jinja_template(self, **kwargs) -> AggregatedResult:
-    #     """
-    #     Wrapper function to generate or apply jinja2 template configurations for devices.
-
-    #     :param kwargs: Arugments to pass to the self._template function.
-    #     :return: Returns AggregatedResult from the Nornir.run command.
-    #     """
-    #     return self.nr.run(self._jinja_template, name = "template", **kwargs)
     
-    def save_configuration(self) -> AggregatedResult:
-        """
-        Saves the running-configuration of the device to startup-configuration
-        
-        :return: Returns AggregatedResult from the Nornir.run command.
-        """
-        return self.nr.run(netmiko_save_config)
-    
-    def backup_configuration(self) -> AggregatedResult:
-        """
-        Backup the configuration of devices to a file.
-
-        If the configuration path `self.saved_configs_root` is a git repository, then any changes will be committed.
-        
-        :return: Returns the AggregatedResult result of getting the configuration from the device.
-        """
-        result = self.send_command_all(command_string = "show running-config")
-        for host in result:
-            with open(f"{self.saved_configs_root}/{host}.txt", "w") as f:
-                f.write(result[host][0].result)
-            if self.repo is not None:
-                self.repo.index.add(f"{host}.txt")
-        if self.repo is not None:
-            if self.repo.is_dirty():
-                self.repo.index.commit("updated configurations")
-        return result
-    
-    def send_command_all(self, **kwargs):
+    def send_command_all(self, **kwargs) -> AggregatedResult:
         return self.nr.run(task = netmiko_send_command, **kwargs)
-
-    # def validate_configuration(self) -> Iterable:
-    #     """
-    #     Compares the intended configuration to the actual configuration on the device and displays the differences.
-
-    #     The intended configuration is pulled from the self.nr object which is pulled from the netbox config context.
-
-    #     ttp templates used for comparison are stored under ./templates/ttp
-
-    #     :return: Returns an iterable of dictionaries. The key of the dictionary is the host and the value is a list of 
-    #     dictionaries where the key is the configuration item and the value is the change between the current configuration
-    #     and the intended configuration.
-        
-    #     """
-    #     result = self.send_command_all(command_string = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
-    #     return_list = []
-    #     for host in result:
-    #         tmp = {host : []}
-    #         for configuration_item in self.nr.inventory.hosts[host].data["config_context"]:
-    #             if configuration_item in result[host][0].result[0][0]:
-    #                 current_config = result[host][0].result[0][0][configuration_item]
-    #                 intended_config = self.nr.inventory.hosts[host].data["config_context"][configuration_item]
-    #                 diff = DeepDiff(intended_config, current_config)
-    #                 tmp[host].append({configuration_item : diff})
-    #         return_list.append(tmp)
-    #     return return_list
