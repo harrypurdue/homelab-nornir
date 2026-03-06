@@ -31,7 +31,6 @@ class Helper():
         ## pulling from the nornir config file
         ## defaults to empty if no value found
         self.saved_configs_root = nr.config.user_defined.get("saved_configs_path") or ""
-        self.template_path = nr.config.user_defined.get("template_path") or ""
 
         ## make sure saved configuration root folder exists
         Path(f"{self.saved_configs_root}").mkdir(exist_ok = True)
@@ -70,6 +69,4 @@ class Helper():
 
         """
         return self.nr.run(*args, **kwargs)
-    
-    def send_command_all(self, **kwargs) -> AggregatedResult:
-        return self.nr.run(task = netmiko_send_command, **kwargs)
+

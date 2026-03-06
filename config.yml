@@ -12,4 +12,3 @@ logging:
   to_console: False
 user_defined:
   saved_configs_path: configs
-  template_path: templates

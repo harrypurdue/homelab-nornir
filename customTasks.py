@@ -1,10 +1,11 @@
 from nornir_netmiko.tasks import netmiko_send_command, netmiko_send_config, netmiko_save_config
 from nornir_jinja2.plugins.tasks import template_file
-from nornir.core.task import Result
+from nornir.core.task import Result, Task
 from nornir.core.exceptions import NornirExecutionError
 from deepdiff import DeepDiff
+from typing import Any
 
-def command(task, command, config = False, **kwargs):
+def command(task: Task, command: str | list, config: bool = False, **kwargs: Any) -> Result:
     if config:
         task_ = netmiko_send_config
         command_key = "config_commands"
@@ -24,7 +25,7 @@ def command(task, command, config = False, **kwargs):
                 changed = result.changed)
 
 
-def template(task, apply = False):
+def template(task: Task, template: str = "base.j2", templates_path: str = "templates/", apply: bool = False) -> Result:
     """
     Generates or applys jinja2 templates to devices.
     
@@ -38,17 +39,12 @@ def template(task, apply = False):
     # name conflicts with Task/Result object return value
     del template_vars["name"]
 
-    if task.host.platform == "cisco_ios":
-        template = "base.j2"
-
-    path = f"templates/"
-    path += task.host.platform
+    templates_path += task.host.platform
 
     changed = False
-    failed = False
 
     # generate template
-    generated_template = task.run(task = template_file, template = template, path = path, **template_vars)
+    generated_template = task.run(task = template_file, template = template, path = templates_path, **template_vars)
     failed = generated_template.failed
     result = generated_template[0].result
 
@@ -65,7 +61,7 @@ def template(task, apply = False):
                     failed = failed)
 
 
-def validate_configuration(task):
+def validate_configuration(task: Task) -> Result:
     """
     Compares the intended configuration to the actual configuration on the device and displays the differences.
 
@@ -95,7 +91,7 @@ def validate_configuration(task):
                     failed = False,
                     result = return_list)
 
-def save_configuration(task):
+def save_configuration(task: Task) -> Result:
     result = task.run(task = netmiko_save_config)
 
     return Result(host = task.host,
@@ -103,7 +99,7 @@ def save_configuration(task):
                     changed = result.changed,
                     failed = result.failed)
 
-def backup_configuration(task, dir = None):
+def backup_configuration(task: Task, dir: str | None = None) -> Result:
     if dir is None:
         raise NornirExecutionError
 
@@ -119,11 +115,6 @@ def backup_configuration(task, dir = None):
                     changed = result.changed,
                     failed = result.failed)
 
-
-def test(task):
-    result = task.run(task = command, command = "show run", use_ttp = True, ttp_template = "./templates/ttp/")
+        
     
-    return Result(host = task.host,
-                    result = result[0].result,
-                    changed = result.changed,
-                    failed = result.failed)
+    
