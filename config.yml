@@ -1,5 +1,6 @@
 inventory:
   options:
+    ssl_verify: "./certs/homelab_sub_ca-chain.pem"
   plugin: NetBoxInventory2
 runner:
   plugin: threaded
