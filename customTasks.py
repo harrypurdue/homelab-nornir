@@ -101,7 +101,10 @@ def save_configuration(task: Task) -> Result:
 
 def backup_configuration(task: Task, dir: str | None = None) -> Result:
     if dir is None:
-        raise NornirExecutionError
+        return Result(host = task.host,
+                      result = "Failed to backup configuration. `dir` is not set.",
+                      changed = False,
+                      failed = True)
 
     result = task.run(task = command, command = "show run")
 

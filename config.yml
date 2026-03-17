@@ -12,4 +12,4 @@ logging:
   log_file: nornir.log
   to_console: False
 user_defined:
-  saved_configs_path: configs
+  saved_configs_root: configs

@@ -68,7 +68,7 @@ if __name__ == "__main__":
     elif args.save_config:
         result = h.run(task = customTasks.save_configuration)
     elif args.backup_config:
-        result = h.run(task = customTasks.backup_configuration, dir = getattr(h, "saved_configs_root"))
+        result = h.run(task = customTasks.backup_configuration, dir = getattr(h, "saved_configs_root", None))
     elif args.validate_config:
         result = h.run(task = customTasks.validate_configuration)
     

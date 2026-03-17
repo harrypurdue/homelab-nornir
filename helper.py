@@ -25,18 +25,20 @@ class Helper():
         if nr.inventory.defaults.password is None:
             nr.inventory.defaults.password = getpass("Password: ")
 
-        if filter is not None:
-            nr = nr.filter(filter)
-
-        ## pulling from the nornir config file
-        ## defaults to empty if no value found
-        self.saved_configs_root = nr.config.user_defined.get("saved_configs_path") or ""
-
-        ## make sure saved configuration root folder exists
-        Path(f"{self.saved_configs_root}").mkdir(exist_ok = True)
-
         ## original_nr allows multiple filter calls
         self.nr, self.original_nr = nr, nr
+
+        if filter is not None:
+            self.nr = nr.filter(filter)
+
+        ## pulling from the nornir config file
+        for k, v in nr.config.user_defined.items():
+            setattr(self, k, v)
+
+        ## make sure saved configuration root folder exists
+        if getattr(self, "saved_configs_root", False):
+            Path(f"{getattr(self,"saved_configs_root", None)}").mkdir(exist_ok = True)
+
 
         ## check if configs are managed by git repo
         try:
